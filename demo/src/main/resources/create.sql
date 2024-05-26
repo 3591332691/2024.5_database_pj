@@ -11,6 +11,7 @@ CREATE TABLE user (
                       student_number VARCHAR(20),
                       age INT
 );
+INSERT INTO user (userID, user_name, gender, student_number, age)VALUES (1, 'aa', 'female', '2024001', 18);
 
 DROP TABLE IF EXISTS `merchant`;
 CREATE TABLE merchant (
@@ -18,18 +19,24 @@ CREATE TABLE merchant (
                           merchant_name VARCHAR(255),
                           address VARCHAR(255)
 );
+INSERT INTO merchant (merchantID, merchant_name, address)VALUES (1, 'hamburger', 'H201');
+
 
 DROP TABLE IF EXISTS `good`;
 CREATE TABLE good (
                        goodID INT AUTO_INCREMENT PRIMARY KEY,
+                       good_name VARCHAR(255),
                        price DECIMAL(10, 2),
                        category VARCHAR(255),
                        description TEXT,
-                       img VARCHAR(255),
+                       image VARCHAR(255),
                        if_in_main_dish BOOLEAN,
                        merchantID INT,
                        FOREIGN KEY (merchantID) REFERENCES merchant(merchantID)
 );
+INSERT INTO good (good_name,price, category, description, image, if_in_main_dish, merchantID)VALUES ('good1',10.99, 'Electronics', 'High-quality headphones', 'headphones.jpg', TRUE, 1);
+INSERT INTO good (good_name,price, category, description, image, if_in_main_dish, merchantID)VALUES ('good2',10.99, 'Electronics', 'High-quality headphones', 'headphones.jpg', TRUE, 1);
+
 DROP TABLE IF EXISTS `comment`;
 CREATE TABLE comment (
                          commentID INT AUTO_INCREMENT PRIMARY KEY,
