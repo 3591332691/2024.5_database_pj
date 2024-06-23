@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: 1fr;
+            height: 100vh;
+        }
+
+        .block {
+            border: 1px solid black;
+            margin: 5px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="block" id="userInfo">
+        <h2>个人信息</h2>
+        <a id="userInfoLink" href="/api/users/${user.id}">查看用户信息</a>
+    </div>
+    <div class="block">Block 2</div>
+    <div class="block">Block 3</div>
+    <div class="block">Block 4</div>
+</div>
+
+<script>
+
+    // 获取 URL 中的参数函数
+    function getUrlParameter(name) {
+        name = name.replace(/\\[/, '\\\\[').replace(/\\]/, '\\\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    };
+    // 页面加载时执行的程序
+    window.onload = function() {
+        // 调用后端API获取用户信息
+        var userId = getUrlParameter('userId');
+        var userInfoLink = document.getElementById('userInfoLink');
+        var fetchUrl = userInfoLink.getAttribute('href');
+        fetch(fetchUrl)
+            .then(response => response.json())
+            .then(data => {
+                // 在页面上显示用户信息
+                console.log(data);
+                document.getElementById('userInfo').innerHTML = `
+                <h2>个人信息</h2>
+                <p>Name: ${data.name}</p>
+                <p>Gender: ${data.gender}</p>
+                <p>ID: ${data.id}</p>
+                <!-- 根据你的数据结构自行调整显示的内容 -->
+            `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    };
+</script>
+
+</body>
+</html>

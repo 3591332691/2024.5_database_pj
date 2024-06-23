@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <script>
+        function redirectToPage() {
+            // 获取选中的角色
+            var role = document.querySelector('input[name="role"]:checked').value;
+            // 获取输入框中的 ID 值
+            var id = document.getElementById("id").value;
+            // 构建带参数的 URL
+            var url;
+            if (role === "user") {
+                url = "for_student?id=" + id;
+            } else if (role === "merchant") {
+                url = "for_merchant?id=" + id;
+            }
+            // 跳转到带参数的页面
+            window.location.href = url;
+        }
+    </script>
+</head>
+<body>
+<h1>Login</h1>
+<form onsubmit="redirectToPage(); return false; " action="/login" method="post">
+    <div>
+        <label>
+            <input type="radio" name="role" value="user" checked> 我是学生
+        </label>
+        <label>
+            <input type="radio" name="role" value="merchant"> 我是商家
+        </label>
+    </div>
+    <div>
+        <label for="id">ID：</label>
+        <input type="text" id="id" name="id" required>
+    </div>
+    <div>
+        <button type="submit">登录</button>
+    </div>
+</form>
+</body>
+</html>

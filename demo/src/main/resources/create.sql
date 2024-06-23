@@ -4,14 +4,14 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- 检查表是否存在，如果不存在则创建
 DROP TABLE IF EXISTS `user`;
-CREATE TABLE user (
+CREATE TABLE `user` (
                       userID INT AUTO_INCREMENT PRIMARY KEY ,
                       user_name VARCHAR(255),
                       gender VARCHAR(10),
                       student_number VARCHAR(20),
                       age INT
 );
-INSERT INTO user (userID, user_name, gender, student_number, age)VALUES (1, 'aa', 'female', '2024001', 18);
+INSERT INTO `user` (userID, user_name, gender, student_number, age)VALUES (1, 'aa', 'female', '2024001', 18);
 
 DROP TABLE IF EXISTS `merchant`;
 CREATE TABLE merchant (
@@ -36,15 +36,6 @@ CREATE TABLE good (
 );
 INSERT INTO good (good_name,price, category, description, image, if_in_main_dish, merchantID)VALUES ('good1',10.99, 'Electronics', 'High-quality headphones', 'headphones.jpg', TRUE, 1);
 INSERT INTO good (good_name,price, category, description, image, if_in_main_dish, merchantID)VALUES ('good2',10.99, 'Electronics', 'High-quality headphones', 'headphones.jpg', TRUE, 1);
-
-DROP TABLE IF EXISTS `comment`;
-CREATE TABLE comment (
-                         commentID INT AUTO_INCREMENT PRIMARY KEY,
-                         content TEXT,
-                         rating DECIMAL(3, 2),
-                         goodID INT,
-                         FOREIGN KEY (goodID) REFERENCES good(goodID)
-);
 DROP TABLE IF EXISTS `order`;
 CREATE TABLE `order` (
                          orderID INT AUTO_INCREMENT PRIMARY KEY,
@@ -58,6 +49,18 @@ CREATE TABLE `order` (
                          FOREIGN KEY (merchantID) REFERENCES `merchant`(merchantID),
                          FOREIGN KEY (userID) REFERENCES `User`(userID)
 );
+
+DROP TABLE IF EXISTS `comment`;
+CREATE TABLE comment (
+                         commentID INT AUTO_INCREMENT PRIMARY KEY,
+                         content TEXT,
+                         rating DECIMAL(3, 2),
+                         goodID INT,
+                         orderID INT,
+                         FOREIGN KEY (goodID) REFERENCES `good`(goodID),
+                         FOREIGN KEY (orderID) REFERENCES `order`(orderID)
+);
+
 
 DROP TABLE IF EXISTS `message`;
 CREATE TABLE message (
