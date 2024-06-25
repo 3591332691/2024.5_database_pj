@@ -15,53 +15,517 @@
             border: 1px solid black;
             margin: 5px;
             padding: 10px;
+            max-height: 900px; /* 设置搜索区域的最大高度 */
+            overflow-y: auto; /* 当内容超出最大高度时显示滚动条 */
+        }
+
+
+        #searchMerchantInput {
+            width: 70%;
+            padding: 5px;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #searchButton {
+            padding: 6px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .search-results {
+            margin-top: 10px;
+        }
+
+        .search-results ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .search-results li {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-results li:last-child {
+            border-bottom: none;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="block" id="userInfo">
-        <h2>个人信息</h2>
-        <a id="userInfoLink" href="/api/users/${user.id}">查看用户信息</a>
+    <div class="block" id="block1">
+        <h2>用户</h2>
+        <div id = "userInfo"></div>
+        <div id = "userFavor"></div>
+        <div id = "userFavorMerchant"></div>
+        <div id = "userOrder"></div>
+        <div id = "userMessage"></div>
     </div>
-    <div class="block">Block 2</div>
-    <div class="block">Block 3</div>
-    <div class="block">Block 4</div>
+    <div class="block" id="searchMerchant">
+        <h2>搜索栏</h2>
+        <input type="text" id="searchMerchantInput" placeholder="输入你想要查找的商户">
+        <button id="searchButton" onclick="SearchMerchantButtonClicked()" > 商户搜索 </button>
+        <div id="searchResults" class="search-results">
+            <!-- 这里将显示搜索结果列表 -->
+        </div>
+    </div>
+    <div class="block">
+        <h2>商家</h2>
+        <div id = "MerchantInfo"></div>
+        <div id = "dishes"></div>
+        <div id = "searchDish">
+            <h2>搜索栏</h2>
+            <input type="text" id="searchDishInput" placeholder="输入你想要查找的餐品">
+            <button id="searchDishButton" onclick="SearchDishButtonClicked()" > 餐品搜索 </button>
+            <div id="searchDishResults" class="search-results">
+            </div>
+        </div>
+    </div>
+    <div class="block" id = "dishOrOrderDiv">
+        <h2>菜品详细信息</h2>
+        <div id = "dishInfo">
+        </div>
+        <div id = "dishsellAndFavor">
+            <div id = "dishsell"></div>
+            <div id = "dishFavor"></div>
+        </div>
+    </div>
 </div>
 
 <script>
-
-    // 获取 URL 中的参数函数
-    function getUrlParameter(name) {
-        name = name.replace(/\\[/, '\\\\[').replace(/\\]/, '\\\\]');
-        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-        var results = regex.exec(location.search);
-        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-    };
+    //全局变量
+    var merchantIDAll = 0;
+    /**
+     * 用于展示用户的收藏商品
+     * @param userId 表示是哪个用户
+     */
+    function showUserFavorDish(userId) {
+        var apiUrl = "/favored_goods/userID/" + userId;
+        const userFavorDiv = document.getElementById('userFavor');
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                //在这里展示data里的收藏
+                var html="<p> 收藏的餐品</p>"
+                html += '<ul>';
+                data.forEach(function(result) {
+                    var dishName = result.good_name; // 假设菜品名称字段为 dishName
+                    var dishID = result.goodID;
+                    html += '<li onclick="showDishDetails(\'' + dishID + '\')">';
+                    html += '<div>';
+                    html += '<p>菜品名称: ' + dishName + '</p>';
+                    html += '</div>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+                userFavorDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    /**
+     * 用于展示用户收藏的商户
+     * @param userId
+     */
+    function showUserFavorMerchant(userId) {
+        var apiUrl = "/favored_merchant/userID/" + userId;
+        const userFavorMerchantDiv = document.getElementById('userFavorMerchant');
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                var html="<p> 收藏的商户</p>"
+                html += '<ul>';
+                data.forEach(function(result) {
+                    var merchant_name = result.merchant_name;
+                    html += '<li onclick="showMerchant(\'' + merchant_name + '\')">';
+                    html += '<div>';
+                    html += '<p>商户名称: ' + merchant_name + '</p>';
+                    html += '</div>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+                userFavorMerchantDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    /**
+     * 用于展示用户的订单信息
+     * @param userId 表示是哪个用户
+     */
+    function showUserOrder(userId) {
+        var apiUrl = "/order/userID/" + userId;
+        const userOrderDiv = document.getElementById('userOrder');
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                //在这里展示data里的历史订单
+                var html="<p> 订单信息</p>"
+                html += '<ul>';
+                data.reverse().forEach(function(result) {
+                    var orderID = result.orderID; // 假设菜品名称字段为 dishName
+                    var status = result.status;
+                    html += '<li onclick="showOrderDetails(\'' + orderID + '\')">';
+                    html += '<div>';
+                    html += '<p>OrderID: ' + orderID + '</p>';
+                    html += '<p>status: ' + status + '</p>';
+                    html += '</div>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+                userOrderDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    /**
+     * 用于展示用户信息的信息
+     * @param userId
+     */
+    function showUserMessage(userId) {
+        var apiUrl = "/message/userID/" + userId;
+        const userMessageDiv = document.getElementById('userMessage');
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                //在这里展示data里的历史订单
+                var html="<p> 提醒信息</p>"
+                data.reverse().forEach(function(result) {
+                    var messageID = result.messageID; // 假设菜品名称字段为 dishName
+                    var content = result.content;
+                    html += '<div>';
+                    html += '<p>messageID: ' + messageID + '</p>';
+                    html += '<p>content: ' + content + '</p>';
+                    html += '</div>';
+                });
+                userMessageDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
     // 页面加载时执行的程序
     window.onload = function() {
         // 调用后端API获取用户信息
-        var userId = getUrlParameter('userId');
-        var userInfoLink = document.getElementById('userInfoLink');
-        var fetchUrl = userInfoLink.getAttribute('href');
-        fetch(fetchUrl)
+        var userId = sessionStorage.getItem('userID');
+        showUserFavorDish(userId);
+        showUserFavorMerchant(userId);
+        showUserOrder(userId);
+        showUserMessage(userId);
+        // 构建后端 API 的 URL
+        var apiUrl = "/api/users/get/" + userId;
+        fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
                 // 在页面上显示用户信息
-                console.log(data);
                 document.getElementById('userInfo').innerHTML = `
                 <h2>个人信息</h2>
-                <p>Name: ${data.name}</p>
+                <p>Name: ${data.user_name}</p>
+                <p>Age: ${data.age}</p>
                 <p>Gender: ${data.gender}</p>
-                <p>ID: ${data.id}</p>
-                <!-- 根据你的数据结构自行调整显示的内容 -->
+                <p>ID: ${data.userID}</p>
+                <p>sutdent Number: ${data.student_number}</p>
             `;
             })
             .catch(error => {
                 console.error('Error:', error);
             });
     };
-</script>
+    //搜索商户按钮点击之后
+    function SearchMerchantButtonClicked(){
+        var results = [];
+        var searchInput = document.getElementById('searchMerchantInput');
+        var searchResults = document.getElementById('searchResults');
+        var searchTerm = searchInput.value.trim(); // 获取输入框的值（去除首尾空格）
+        var apiUrl = "/merchant/searchByName/" + searchTerm;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                // 在页面上显示用户信息
+                results=results.concat(data);
+                // 构建搜索结果列表
+                var html = '<ul>';
+                results.forEach(function(result) {
+                    var parts = result.split(' - '); // 假设每个 item 格式为 "merchant_name - main_dish"
+                    var merchant_name = parts[0];
+                    var main_dish = parts[1];
+                    html += '<li onclick="showMerchantDiv(\'' + merchant_name + '\')">';
+                    html += merchant_name + ' - 主打菜品：' + main_dish;
+                    html += '</li>';
+                });
+                html += '</ul>';
+                // 将搜索结果显示在搜索结果区域
+                searchResults.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        // 构建搜索结果列表
+        var html = '<ul>';
+        results.forEach(function(result) {
+            html += '<li>' + result + '</li>';
+        });
+        html += '</ul>';
+        // 将搜索结果显示在搜索结果区域
+        searchResults.innerHTML = html;
+    }
+    //搜索产品按钮点击之后
+    function SearchDishButtonClicked(){
+        var results = [];
+        var searchInput = document.getElementById('searchDishInput');
+        var searchResults = document.getElementById('searchDishResults');
+        var searchTerm = searchInput.value.trim(); // 获取输入框的值（去除首尾空格）
+        var apiUrl = `/searchGoodContainInMerchantID?merchantID=${merchantIDAll}&GoodName=${searchTerm}`;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                results=results.concat(data);
+                var html = '<ul>';
+                results.forEach(function(result) {
+                    var dishName = result.good_name; // 假设菜品名称字段为 dishName
+                    var price = result.price; // 假设价格字段为 price
+                    var image = result.image; // 假设图片字段为 image
+                    var dishID = result.goodID;
+                    html += '<li onclick="showDishDetails(\'' + dishID + '\')">';
+                    html += '<img src="' + image + '" alt="' + dishName + '" style="width: 100px; height: 100px;">';
+                    html += '<div>';
+                    html += '<p>菜品名称: ' + dishName + '</p>';
+                    html += '<p>价格: ' + price + '</p>';
+                    html += '</div>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+                searchResults.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        // 构建搜索结果列表
+        var html = '<ul>';
+        results.forEach(function(result) {
+            html += '<li>' + result + '</li>';
+        });
+        html += '</ul>';
+        // 将搜索结果显示在搜索结果区域
+        searchResults.innerHTML = html;
+    }
+    function showMerchantDiv(merchant_name){
+        showMerchant(merchant_name);
+        showDish(merchant_name);
+    }
+    //展示商家信息
+    function showMerchant(merchant_name){
+        const merchantInfoDiv = document.getElementById('MerchantInfo');
+        let merchantInfo = {
+            merchant_name: merchant_name,
+            merchant_id: "id",
+            address: '商户地址示例'
+        };
+        var apiUrl = "/merchant/name/" + merchant_name;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("data:",data);
+                merchantInfo.merchant_id = data.merchantID;
+                //全局变量设置
+                merchantIDAll = data.merchantID;
+                merchantInfo.address =  data.address;
+                var html = '<button onclick="handleFavoriteMerchant(\'' + data.merchantID + '\')">收藏店铺</button>';
+                html += `
+                    <h2>商家信息</h2>
+                    <p>商家名称: ${merchantInfo.merchant_name}</p>
+                    <p>id: ${merchantInfo.merchant_id}</p>
+                    <p>地址: ${merchantInfo.address}</p>
+                `;
+                merchantInfoDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        // 构建要填充的 HTML 内容
+        var html = `
+        <h2>商家信息</h2>
+        <p>商家名称: ${merchantInfo.merchant_name}</p>
+        <p>id: ${merchantInfo.merchant_id}</p>
+        <p>地址: ${merchantInfo.address}</p>
+        <!-- 根据需要添加更多信息 -->
+    `;
+        // 将 HTML 内容填充到 div 元素中
+        merchantInfoDiv.innerHTML = html;
+    }
+    //展示商户的所有菜单
+    function showDish(merchant_name){
+        const dishesDiv = document.getElementById('dishes');
+        var apiUrl = "/goods/merchant_name/" + merchant_name;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("/goods/merchant_name/data:",data);
+                var html = '<ul>';
+                html += '<p>菜单</p>';
+                data.forEach(function(result) {
+                    var dishName = result.good_name; // 假设菜品名称字段为 dishName
+                    var price = result.price; // 假设价格字段为 price
+                    var image = result.image; // 假设图片字段为 image
+                    var dishID = result.goodID;
+                    html += '<li onclick="showDishDetails(\'' + dishID + '\')">';
+                    html += '<img src="' + image + '" alt="' + dishName + '" style="width: 100px; height: 100px;">';
+                    html += '<div>';
+                    html += '<p>菜品名称: ' + dishName + '</p>';
+                    html += '<p>价格: ' + price + '</p>';
+                    html += '</div>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+                dishesDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    //展示商品详情页，可以在这里下单，收藏
+    function showDishDetails(dishID){
+        showDishSellAndFavor(dishID);
+        var apiUrl = "/goods/goodID/" + dishID;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("/goods/goodID/data:",data);
+                // 构建菜品详细信息 HTML
+                var html = '<button onclick="addFavorite(\'' + dishID + '\')">收藏</button>';
+                html += '<button onclick="addOrder(\'' + dishID + '\')">下单</button>';
+                html += '<p>分类：' + data.category + '</p>';
+                html += '<p>菜品描述：' + data.description + '</p>';
+                html += '<p>价格：' + data.price + '</p>';
+                html += '<img src="' + data.image + '" alt="' + data.good_name + '" style="width: 200px; height: 200px;">';
+                html += '<p>营养信息：' + "暂无" + '</p>';
+                html += '<p>可能的过敏源：' + "暂无" + '</p>';
+                // 更新页面中的 dishInfo 区域
+                var dishInfoDiv = document.getElementById('dishInfo');
+                dishInfoDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error fetching dish details:', error);
+            });
 
+    }
+    //展示商品的销量和收藏量
+    function showDishSellAndFavor(dishID){
+        //这一部分得到销量
+        const dishSellDiv = document.getElementById('dishsell');
+        var apiUrl = "/order/GoodID/" + dishID;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("/order/GoodID/data:",data);
+                var count = 0;
+                data.forEach(function(result) {
+                    count++;
+                });
+                var html = "销量：" + count;
+                dishSellDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        //这里是收藏量
+        const dishFavorDiv = document.getElementById('dishFavor');
+        var apiUrl = "/favored_goods/GoodID/" +dishID ;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("/favored_goods/GoodID/data:",data);
+                var count = 0;
+                data.forEach(function(result) {
+                    count++;
+                });
+                var html = "收藏量：" + count;
+                dishFavorDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    //点击收藏商品
+    async function addFavorite(dishID) {
+        try {
+            var userID = sessionStorage.getItem('userID');
+            var apiUrl = "/favored_goods/add/"+userID+"/"+dishID;
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            alert("加入收藏成功！");
+        } catch (error) {
+            console.error('Error:', error.message);
+        }
+    }
+    //点击收藏商家
+    function handleFavoriteMerchant(merchantID){
+        var userId = sessionStorage.getItem('userID');
+        var apiUrl = "/favored_merchant/add/" + userId+"/"+ merchantID;
+        fetch(apiUrl)
+            .then(data => {
+                alert("加入收藏成功！");
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    //点击下单
+    function addOrder(dishID){
+        var userId = sessionStorage.getItem('userID');
+        var apiUrl = "/order/add/" + dishID+"/"+ userId;
+        const dishOrOrderDiv = document.getElementById('dishOrOrderDiv');
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                var html = "";
+                html += "<p>订单信息</p>";
+                html += "<p>订单ID: " + data.orderID + "</p>";
+                html += "<p>餐品ID: " + data.good_id_list + "</p>";
+                html += "<p>餐品价格: " + data.good_price_list + "</p>";
+                html += "<p>订单总价: " + data.total_cost + "</p>";
+                html += "<p>状态: " + data.status + "</p>";
+                dishOrOrderDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    //点击展示订单详情
+    function showOrderDetails(orderID) {
+        const OrderDivDiv = document.getElementById('dishOrOrderDiv');
+        var apiUrl = "/order/OrderID/" + orderID;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("/order/OrderID/data:",data);
+                // 构建菜品详细信息 HTML
+                var html = "";
+                html += '<p>OrderID：' + data.orderID + '</p>';
+                html += '<p>MerchantID：' + data.merchantID + '</p>';
+                html += '<p>下单时间：' + data.time + '</p>';
+                html += '<p>餐品信息：' + data.good_id_list + '</p>';
+                html += '<p>价格信息：' + data.good_price_list+ '</p>';
+                html += '<p>总费用：' + data.total_cost + '</p>';
+                html += '<p>状态：' + data.status + '</p>';
+                // 更新页面中的 OrderDivDiv 区域
+                OrderDivDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+</script>
 </body>
 </html>

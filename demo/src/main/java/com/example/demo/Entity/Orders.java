@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "order")
-public class Order {
+@Table(name = "orders")
+public class Orders {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int orderID;
@@ -21,7 +21,7 @@ public class Order {
     private LocalDateTime time;
     private String good_id_list;
     private String good_price_list;
-    private float total_coat;
+    private float total_cost;
     private String status;
 
 }

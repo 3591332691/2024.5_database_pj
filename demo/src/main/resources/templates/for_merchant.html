@@ -3,8 +3,279 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <style>
+        .container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: 1fr;
+            height: 100vh;
+        }
+        .block {
+            border: 1px solid black;
+            margin: 5px;
+            padding: 10px;
+            max-height: 900px; /* 设置搜索区域的最大高度 */
+            overflow-y: auto; /* 当内容超出最大高度时显示滚动条 */
+        }
+    </style>
 </head>
 <body>
+<div class="container">
+    <div class="block">
+        <h2>商户</h2>
+        <div id = "userInfo"></div>
+        <div id = "userOrder"></div>
+    </div>
+    <div class="block" id="dishesInfo">
+        <h2>菜单</h2>
+    </div>
 
-</body>
-</html>
+    <div class="block" id = "block3">
+        <div id = "addDish"></div>
+        <div id = "editDish"></div>
+    </div>
+
+    <div class="block" id = "OrderDiv">
+        <h2>订单详细信息</h2>
+    </div>
+</div>
+<script>
+    //全局变量
+    var merchantId = sessionStorage.getItem('userID');
+
+    //用来展示得到的订单,放在第一栏下面
+    function showMerchantOrder(merchantId) {
+        var userOrderDiv =  document.getElementById('userOrder');
+        var apiUrl = "/orderUncom/MerchantID/" + merchantId;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(results => {
+                //展示所有没有结束的订单
+                var html = '<p>订单信息</p>';
+                html += '<ul>';
+                results.forEach(function(result) {
+                    var orderID = result.orderID; // 假设菜品名称字段为 dishName
+                    var total_cost = result.total_cost;
+                    var status = result.status;
+                    html += '<li onclick="showOrderDetails(\'' + orderID + '\')">';
+                    html += '<div>';
+                    html += '<p>orderID: ' + orderID + '</p>';
+                    html += '<p>总价格: ' + total_cost + '</p>';
+                    html += '<p>状态: ' + status + '</p>';
+                    html += '</div>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+                userOrderDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    function showMerchantInfo(merchantId) {
+        // 构建后端 API 的 URL
+        var apiUrl = "/merchant/id/" + merchantId;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                // 在页面上显示个人信息
+                document.getElementById('userInfo').innerHTML = `
+                <h2>商户个人信息</h2>
+                <p>Name: ${data.merchant_name}</p>
+                <p>ID: ${data.merchantID}</p>
+                <p>address: ${data.address}</p>
+            `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    //在第四栏 ， 用来展示订单的详情，加上出餐按钮
+    function showOrderDetails(orderID){
+        var OrderDiv =  document.getElementById('OrderDiv');
+        var apiUrl = "/order/OrderID/" + orderID;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(results => {
+                //展示没有结束的订单详情
+                var html = '<h2>订单详细信息</h2>';
+                var orderID = results.orderID; // 假设菜品名称字段为 dishName
+                var userID = results.userID; // 假设价格字段为 price
+                var time = results.time; // 假设图片字段为 image
+                var good_id_list = results.good_id_list;
+                var good_price_list = results.good_price_list;
+                var total_cost = results.total_cost;
+                var status = results.status;
+                html += '<div>';
+                html += '<p>orderID: ' + orderID + '</p>';
+                html += '<p>userID: ' + userID + '</p>';
+                html += '<p>时间: ' + time + '</p>';
+                html += '<p>餐品: ' + good_id_list + '</p>';
+                html += '<p>价格: ' + good_price_list + '</p>';
+                html += '<p>总价: ' + total_cost + '</p>';
+                html += '<p>状态: ' + status + '</p>';
+                // 出餐按钮
+                html += '<button onclick="handlePrepareMeal(' + orderID + ')">出餐</button>';
+                html += '</div>';
+                OrderDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    //点击出餐
+    function  handlePrepareMeal(orderID){
+        var OrderDiv =  document.getElementById('OrderDiv');
+        var apiUrl = "/order/completeByOrderID/" + orderID;
+        fetch(apiUrl)
+            .then(results => {
+                //展示结束的订单详情
+                console.log("/order/completeByOrderID/results:",results);
+                var html = '<h2>订单详细信息</h2>';
+                html += '<div>';
+                html += '<p>出餐成功</p>';
+                html += '</div>';
+                OrderDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    //展示第二栏的菜单
+    function showdishes(merchantId) {
+        const dishesDiv = document.getElementById('dishesInfo');
+        var apiUrl = "/goods/merchantID/" + merchantId;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("/goods/merchant_id/data:",data);
+                var html = '<h2>菜单</h2>';
+                //加个按钮用来添加商品
+                html +='<button onclick="createDish()">创建餐品</button>';
+                html += '<ul>';
+                data.forEach(function(result) {
+                    var dishName = result.good_name; // 假设菜品名称字段为 dishName
+                    var price = result.price; // 假设价格字段为 price
+                    var image = result.image; // 假设图片字段为 image
+                    var dishID = result.goodID;
+                    html += '<li onclick="editDishDetails(\'' + dishID + '\')">';
+                    html += '<img src="' + image + '" alt="' + dishName + '" style="width: 100px; height: 100px;">';
+                    html += '<div>';
+                    html += '<p>菜品名称: ' + dishName + '</p>';
+                    html += '<p>价格: ' + price + '</p>';
+                    html += '</div>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+                dishesDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    /**
+     * 用于修改一个商品
+     * @param goodID
+     */
+    function editDishDetails(goodID){
+
+    }
+
+    /**
+     * 用于新建一个餐品
+     */
+    function createDish(){
+        var addDishDiv = document.getElementById('addDish');
+        // 创建表单元素
+        var form = document.createElement('form');
+
+        // 创建餐品名字表单项
+        var dishNameLabel = document.createElement('label');
+        dishNameLabel.textContent = '餐品名字:';
+        var dishNameInput = document.createElement('input');
+        dishNameInput.type = 'text';
+        dishNameInput.name = 'dishName';
+        form.appendChild(dishNameLabel);
+        form.appendChild(dishNameInput);
+        form.appendChild(document.createElement('br'));
+
+        // 创建价格表单项
+        var priceLabel = document.createElement('label');
+        priceLabel.textContent = '价格:';
+        var priceInput = document.createElement('input');
+        priceInput.type = 'text';
+        priceInput.name = 'price';
+        form.appendChild(priceLabel);
+        form.appendChild(priceInput);
+        form.appendChild(document.createElement('br'));
+
+        // 创建类别表单项
+        var categoryLabel = document.createElement('label');
+        categoryLabel.textContent = '类别:';
+        var categoryInput = document.createElement('input');
+        categoryInput.type = 'text';
+        categoryInput.name = 'category';
+        form.appendChild(categoryLabel);
+        form.appendChild(categoryInput);
+        form.appendChild(document.createElement('br'));
+
+        // 创建简介表单项
+        var descriptionLabel = document.createElement('label');
+        descriptionLabel.textContent = '简介:';
+        var descriptionInput = document.createElement('textarea');
+        descriptionInput.name = 'description';
+        form.appendChild(descriptionLabel);
+        form.appendChild(descriptionInput);
+        form.appendChild(document.createElement('br'));
+
+        // 创建image的url地址表单项
+        var imageUrlLabel = document.createElement('label');
+        imageUrlLabel.textContent = 'image的url地址:';
+        var imageUrlInput = document.createElement('input');
+        imageUrlInput.type = 'text';
+        imageUrlInput.name = 'imageUrl';
+        form.appendChild(imageUrlLabel);
+        form.appendChild(imageUrlInput);
+        form.appendChild(document.createElement('br'));
+
+        // 创建是否在主要菜单中复选框
+        var inMainMenuLabel = document.createElement('label');
+        inMainMenuLabel.textContent = '是否在主要菜单中:';
+        var inMainMenuInput = document.createElement('input');
+        inMainMenuInput.type = 'checkbox';
+        inMainMenuInput.name = 'inMainMenu';
+        form.appendChild(inMainMenuLabel);
+        form.appendChild(inMainMenuInput);
+        form.appendChild(document.createElement('br'));
+
+        // 创建提交按钮
+        var submitButton = document.createElement('button');
+        submitButton.textContent = '提交';
+        submitButton.onclick = function() {
+            handleAddSubmit(form); // 替换为你的处理提交逻辑函数
+        };
+        form.appendChild(submitButton);
+
+        // 将表单添加到 addDishDiv 中
+        addDishDiv.appendChild(form);
+    }
+    function handleAddSubmit(form){
+        // 可以通过 form 元素来访问表单中的数据
+        var good_name = form.elements['dishName'].value;
+        var price = form.elements['price'].value;
+        var category = form.elements['category'].value;
+        var description = form.elements['description'].value;
+        var image = form.elements['imageUrl'].value;
+        var inMainMenu = form.elements['inMainMenu'].checked;
+        var merchantID = merchantId;
+
+    }
+    window.onload = function() {
+        // 展示得到的订单
+        showMerchantOrder(merchantId);
+        //展示个人信息
+        showMerchantInfo(merchantId);
+        showdishes(merchantId);
+    };
+</script>

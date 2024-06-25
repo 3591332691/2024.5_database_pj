@@ -9,12 +9,15 @@
             var role = document.querySelector('input[name="role"]:checked').value;
             // 获取输入框中的 ID 值
             var id = document.getElementById("id").value;
+
+            // 存储用户ID到 sessionStorage 或 localStorage
+            sessionStorage.setItem('userID', id); // 或 localStorage.setItem('userID', id);
             // 构建带参数的 URL
             var url;
             if (role === "user") {
-                url = "for_student?id=" + id;
+                url = "for_student";
             } else if (role === "merchant") {
-                url = "for_merchant?id=" + id;
+                url = "for_merchant";
             }
             // 跳转到带参数的页面
             window.location.href = url;

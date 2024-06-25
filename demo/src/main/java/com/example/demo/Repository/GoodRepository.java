@@ -26,5 +26,9 @@ public interface GoodRepository extends JpaRepository<Good,Integer> {
     @Transactional(readOnly = true)
     Optional<Good> findByGoodID(int goodID);
 
+    @Query("SELECT g FROM Good g WHERE g.merchantID = :merchantID AND g.good_name LIKE %:goodName%")
+    List<Good> selectGoodContainInMerchantID(Integer merchantID, String goodName);
 
+    @Query("SELECT g FROM Good g WHERE g.goodID = :goodID")
+    Good findById2(int goodID);
 }
