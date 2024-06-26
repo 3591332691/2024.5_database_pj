@@ -179,6 +179,51 @@
      * @param goodID
      */
     function editDishDetails(goodID){
+        var apiUrl = "/goods/goodID/" + goodID;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("/goods/goodID/data:",data);
+                // 构建菜品详细信息 HTML
+                var html = '';
+                html += '<p>餐品名称：' + data.good_name + '</p>';
+                html += '<p>分类：' + data.category + '</p>';
+                html += '<p>菜品描述：' + data.description + '</p>';
+                html += '<p>价格：<input type="text" id = "price_input" value=" ' + data.price + '"></p>';
+                html += '<p>imageurl路径：' + data.image + '</p>';
+                html += '<p>营养信息：' + "暂无" + '</p>';
+                html += '<p>可能的过敏源：' + "暂无" + '</p>';
+                html +=  '<button onclick="modifyPrice(' + data.goodID + ')">修改价格</button>';
+                // 更新页面中的 dishInfo 区域
+                var dishInfoDiv = document.getElementById('block3');
+                dishInfoDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error fetching dish details:', error);
+            });
+    }
+
+    /**
+     * 调用api来修改价格
+     * @param goodID
+     */
+    function modifyPrice(goodID)
+    {
+        var price = document.getElementById("price_input").value;
+        var apiUrl = "/good/modify/" + goodID+"/"+price;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("/good/modify/data:",data);
+                var html = '<h2>修改成功！</h2>';
+                var dishInfoDiv = document.getElementById('block3');
+                dishInfoDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+
 
     }
 
@@ -189,7 +234,6 @@
         var addDishDiv = document.getElementById('addDish');
         // 创建表单元素
         var form = document.createElement('form');
-
         // 创建餐品名字表单项
         var dishNameLabel = document.createElement('label');
         dishNameLabel.textContent = '餐品名字:';
@@ -199,7 +243,6 @@
         form.appendChild(dishNameLabel);
         form.appendChild(dishNameInput);
         form.appendChild(document.createElement('br'));
-
         // 创建价格表单项
         var priceLabel = document.createElement('label');
         priceLabel.textContent = '价格:';
@@ -260,6 +303,11 @@
         // 将表单添加到 addDishDiv 中
         addDishDiv.appendChild(form);
     }
+
+    /**
+     * 用于提交新建餐品的表单
+     * @param form
+     */
     function handleAddSubmit(form){
         // 可以通过 form 元素来访问表单中的数据
         var good_name = form.elements['dishName'].value;
@@ -269,7 +317,19 @@
         var image = form.elements['imageUrl'].value;
         var inMainMenu = form.elements['inMainMenu'].checked;
         var merchantID = merchantId;
-
+        const dishesInfoDiv = document.getElementById('dishesInfo');
+        var apiUrl = "/goods/add/" + good_name+"/"+price+"/"+category+"/"+
+            description+"/"+image+"/"+inMainMenu+"/"+merchantID;
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                console.log("/goods/add/data:",data);
+                var html = '<h2>增加成功！</h2>';
+                dishesInfoDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
     }
     window.onload = function() {
         // 展示得到的订单

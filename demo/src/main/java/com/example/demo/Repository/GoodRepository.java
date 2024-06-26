@@ -2,6 +2,7 @@ package com.example.demo.Repository;
 
 import com.example.demo.Entity.Good;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.jpa.repository.Query;
@@ -31,4 +32,9 @@ public interface GoodRepository extends JpaRepository<Good,Integer> {
 
     @Query("SELECT g FROM Good g WHERE g.goodID = :goodID")
     Good findById2(int goodID);
+
+    @Modifying
+    @Transactional
+    @Query("update Good g set g.price = :price WHERE g.goodID = :goodID")
+    void modifyGoodsPriceByGoodID(int goodID, float price);
 }

@@ -57,7 +57,16 @@ CREATE TABLE comment (
                          FOREIGN KEY (goodID) REFERENCES `good`(goodID),
                          FOREIGN KEY (orderID) REFERENCES `orders`(orderID)
 );
-
+DROP TABLE IF EXISTS `comment_for_shop`;
+CREATE TABLE comment_for_shop (
+                         comment_for_shopID INT AUTO_INCREMENT PRIMARY KEY,
+                         content TEXT,
+                         rating DECIMAL(3, 2),
+                         merchantID INT,
+                         orderID INT,
+                         FOREIGN KEY (merchantID) REFERENCES `merchant`(merchantID),
+                         FOREIGN KEY (orderID) REFERENCES `orders`(orderID)
+);
 
 DROP TABLE IF EXISTS `message`;
 CREATE TABLE message (
@@ -133,8 +142,8 @@ INSERT INTO `user` (user_name, gender, student_number, age) VALUES ( 'alice', 'f
 INSERT INTO `user` (user_name, gender, student_number, age) VALUES ( 'john', 'male', '2024004', 21);
 # 订单的信息
 INSERT INTO `orders` (merchantID, userID, good_id_list, good_price_list, total_cost, status)
-VALUES (2, 2, '3,4', '8.99,7.99', 16.98, 'processing');
+VALUES (2, 2, '4', '8.99,7.99', 16.98, 'processing');
 
 INSERT INTO `orders` (merchantID, userID, good_id_list, good_price_list, total_cost, status)
-VALUES (3, 2, '5,6', '15.99,14.99', 30.98, 'processing');
+VALUES (3, 2, '6', '15.99,14.99', 30.98, 'processing');
 

@@ -23,20 +23,4 @@ public class UserController {
 
         return userRepository.findByUserID(userId);
     }
-
-    @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userRepository.save(user);
-    }
-
-    @PutMapping("/{userId}")
-    public User updateUser(@PathVariable("userId") int userId, @RequestBody User user) {
-        user.setUserID(userId);
-        return userRepository.save(user);
-    }
-
-    @DeleteMapping("/{userId}")
-    public void deleteUser(@PathVariable("userId") int userId) {
-        userRepository.deleteById(userId);
-    }
 }

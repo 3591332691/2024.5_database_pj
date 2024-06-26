@@ -413,7 +413,6 @@
             .catch(error => {
                 console.error('Error fetching dish details:', error);
             });
-
     }
     //展示商品的销量和收藏量
     function showDishSellAndFavor(dishID){
@@ -504,7 +503,12 @@
     }
     //点击展示订单详情
     function showOrderDetails(orderID) {
-        const OrderDivDiv = document.getElementById('dishOrOrderDiv');
+        //初始先分为两块部分
+        const origin_OrderDiv = document.getElementById('dishOrOrderDiv');
+        var origin_html = '<div id = "order"></div>';
+        origin_html += '<div id = "comment"></div>';
+        origin_OrderDiv.innerHTML = origin_html;
+        //第一部分填充order内容
         var apiUrl = "/order/OrderID/" + orderID;
         fetch(apiUrl)
             .then(response => response.json())
@@ -520,11 +524,126 @@
                 html += '<p>总费用：' + data.total_cost + '</p>';
                 html += '<p>状态：' + data.status + '</p>';
                 // 更新页面中的 OrderDivDiv 区域
-                OrderDivDiv.innerHTML = html;
+                const OrderDiv = document.getElementById('order');
+                OrderDiv.innerHTML = html;
+                //第二部分放comment内容
+                //先判断这个能不能有comment,如果是processing,就不显示comment
+                //如果不是，就判断comment有没有orderID相关的记录了，如果有，就显示
+                //如果没有，就展示写评论的文本框和分数
+                if(data.status=="processing"){
+                    //什么都不做
+                }
+                else{
+                    //查找comment内容
+                    var apiUrl = "/comment/orderID/" + data.orderID;
+                    let commentDiv = document.getElementById('comment');
+                    fetch(apiUrl)
+                        .then(response => response.json())
+                        .then(result => {
+                            if(result.length===0) {
+                                //如果是空,就有文本输入框
+                                // 创建店铺评价的输入框和打分选项
+                                const shopRatingDiv = document.createElement('div');
+                                shopRatingDiv.innerHTML = `
+                                    <label for="shopComment">店铺评价：</label>
+                                    <textarea id="shopComment" name="shopComment"></textarea>
+                                    <label for="shopRating">店铺打分：</label>
+                                    <select id="shopRating" name="shopRating">
+                                        <option value="1">1分</option>
+                                        <option value="2">2分</option>
+                                        <option value="3">3分</option>
+                                        <option value="4">4分</option>
+                                        <option value="5">5分</option>
+                                    </select>
+                                `;
+                                commentDiv.appendChild(shopRatingDiv);
+                                // 创建餐品评价的输入框和打分选项
+                                const foodRatingDiv = document.createElement('div');
+                                foodRatingDiv.innerHTML = `
+                                    <label for="foodComment">餐品评价：</label>
+                                    <textarea id="foodComment" name="foodComment"></textarea>
+                                    <label for="foodRating">餐品打分：</label>
+                                    <select id="foodRating" name="foodRating">
+                                        <option value="1">1分</option>
+                                        <option value="2">2分</option>
+                                        <option value="3">3分</option>
+                                        <option value="4">4分</option>
+                                        <option value="5">5分</option>
+                                    </select>
+                                `;
+                                commentDiv.appendChild(foodRatingDiv);
+                                // 创建提交按钮
+                                const submitButton = document.createElement('button');
+                                submitButton.textContent = '提交评价';
+                                submitButton.onclick = function () {
+                                    const shopComment = document.getElementById('shopComment').value;
+                                    const shopRating = document.getElementById('shopRating').value;
+                                    const foodComment = document.getElementById('foodComment').value;
+                                    const foodRating = document.getElementById('foodRating').value;
+
+                                    // 在这里可以进行提交评价和打分的逻辑处理，例如发送到后端保存等
+                                    console.log('提交店铺评价:', shopComment);
+                                    console.log('店铺打分:', shopRating);
+                                    console.log('提交餐品评价:', foodComment);
+                                    console.log('餐品打分:', foodRating);
+                                    // 这里可以添加逻辑以后端 API 发送数据
+                                    //这是店铺的评价
+                                    var apiUrl_p = "/commentForShop/addComment/" +shopComment+"/"+shopRating+"/"+data.merchantID+"/"+data.orderID;
+                                    fetch(apiUrl_p)
+                                        .then(data => {
+                                        })
+                                        .catch(error => {
+                                            console.error('Error:', error);
+                                        });
+                                    //这是对餐品的评价
+                                    var apiUrl_g = "/comment/addComment/" +foodComment+"/"+foodRating+"/"+data.good_id_list+"/"+data.orderID;
+                                    fetch(apiUrl_g)
+                                        .then(data => {
+                                            const  commentDiv1 = document.getElementById('comment');
+                                            commentDiv1.innerHTML = "评价成功！";
+                                        })
+                                        .catch(error => {
+                                            console.error('Error:', error);
+                                        });
+
+                                };
+                                commentDiv.appendChild(submitButton);
+                            }
+                            else{
+                                //如果不为空,展示评论内容
+                                var goodContent = result[0].content;
+                                var goodRating = result[0].rating;
+                                var apiUrl = "/commentForShop/orderID/" + data.orderID;
+                                fetch(apiUrl)
+                                    .then(response => response.json())
+                                    .then(result1 => {
+                                        if(result1.length!=0) {
+                                            var  shopRating = result1[0].rating;
+                                            var  shopComment = result1[0].content;
+                                            const html_ = `
+                                            <p>店铺评分：${shopRating}</p>
+                                            <p>店铺评论：${shopComment}</p>
+                                            <p>产品评分：${goodRating}</p>
+                                            <p>产品评论：${goodContent}</p>
+                                        `;
+                                            commentDiv.innerHTML = html_;
+                                        }
+                                    })
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+
+
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
             });
+
+
+
     }
 </script>
 </body>

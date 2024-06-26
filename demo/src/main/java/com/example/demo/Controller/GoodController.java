@@ -50,14 +50,32 @@ public class GoodController {
         return goodService.getGoodsInMainByMerchantID(merchantID);
     }
 
+    /**
+     * 修改价格
+     */
+    @GetMapping("/good/modify/{goodID}/{price}")
+    public void modifyGoodsPriceByGoodID(@PathVariable int goodID,@PathVariable float price) {
+        goodRepository.modifyGoodsPriceByGoodID(goodID, price);
+    }
+
     @GetMapping("/searchGoodContainInMerchantID")
     public List<Good> searchGoods(@RequestParam(required = true) Integer merchantID,
                                   @RequestParam(required = true) String GoodName) {
         return goodRepository.selectGoodContainInMerchantID(merchantID,GoodName);
     }
 
+    /**
+     * 新增商品
+     * @param good_name
+     * @param price
+     * @param category
+     * @param description
+     * @param image
+     * @param if_in_main_dish
+     * @param merchantID
+     */
     @GetMapping("/goods/add/{good_name}/{price}/{category}/{description}/{image}/{if_in_main_dish}/{merchantID}")
     public void GoodsAdd(@PathVariable String good_name, @PathVariable float price, @PathVariable String category,@PathVariable String description, @PathVariable String image, @PathVariable boolean if_in_main_dish,@PathVariable int merchantID) {
-        return goodService.GoodsAdd( good_name,price,category,description,image,if_in_main_dish,merchantID);
+        goodService.GoodsAdd( good_name,price,category,description,image,if_in_main_dish,merchantID);
     }
 }
